@@ -1,2 +1,2 @@
-rootProject.name = "entity-factory"
+rootProject.name = "entity-decoder"
 
