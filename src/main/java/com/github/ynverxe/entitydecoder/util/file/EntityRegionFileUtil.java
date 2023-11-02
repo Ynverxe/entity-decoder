@@ -1,4 +1,4 @@
-package com.github.ynverxe.entitydecoder.file;
+package com.github.ynverxe.entitydecoder.util.file;
 
 import com.github.ynverxe.entitydecoder.util.nbt.NBTFileLoader;
 import org.jetbrains.annotations.NotNull;

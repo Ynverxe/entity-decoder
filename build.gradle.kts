@@ -1,19 +1,15 @@
 plugins {
-    id("java")
+    id("java-library")
 }
 
 group = "com.github.ynverxe"
-version = "1.0-SNAPSHOT"
+version = "0.0.1-beta"
 
 repositories {
     mavenCentral()
+    maven("https://jitpack.io")
 }
 
 dependencies {
-    testImplementation(platform("org.junit:junit-bom:5.9.1"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
-}
-
-tasks.test {
-    useJUnitPlatform()
+    api("com.github.Minestom.Minestom:Minestom:c496ee357")
 }

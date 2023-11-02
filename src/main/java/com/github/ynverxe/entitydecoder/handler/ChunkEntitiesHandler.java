@@ -1,4 +1,4 @@
-package com.github.ynverxe.entitydecoder.file;
+package com.github.ynverxe.entitydecoder.handler;
 
 import net.minestom.server.instance.Chunk;
 import org.jetbrains.annotations.NotNull;

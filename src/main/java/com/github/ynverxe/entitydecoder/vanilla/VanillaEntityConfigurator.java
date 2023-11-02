@@ -2,8 +2,7 @@ package com.github.ynverxe.entitydecoder.vanilla;
 
 import com.github.ynverxe.entitydecoder.EntityConfigurator;
 import com.github.ynverxe.entitydecoder.EntityFactory;
-import com.github.ynverxe.entitydecoder.EntitySerializer;
-import com.github.ynverxe.entitydecoder.exception.MissingTagException;
+import com.github.ynverxe.entitydecoder.RichEntityFactory;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.coordinate.Vec;
 import net.minestom.server.entity.Entity;
@@ -11,38 +10,22 @@ import net.minestom.server.entity.LivingEntity;
 import net.minestom.server.entity.metadata.EntityMeta;
 import net.minestom.server.tag.Tag;
 import net.minestom.server.tag.TagHandler;
-import net.minestom.server.tag.TagReadable;
 import org.jetbrains.annotations.NotNull;
 import org.jglrxavpok.hephaistos.nbt.*;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.Consumer;
-
 import static com.github.ynverxe.entitydecoder.vanilla.EntityVanillaConstants.*;
 
-public class VanillaEntityExpansion implements EntityConfigurator<Entity>, EntitySerializer<Entity> {
+public class VanillaEntityConfigurator implements EntityConfigurator {
 
-  private static final Field FIRE_EXTINGUISH_TIME;
+  private final EntityFactory passengerResolver;
 
-  static {
-    try {
-      FIRE_EXTINGUISH_TIME = LivingEntity.class.getDeclaredField("fireExtinguishTime");
-      FIRE_EXTINGUISH_TIME.setAccessible(true);
-    } catch (NoSuchFieldException e) {
-      throw new RuntimeException(e);
+  public VanillaEntityConfigurator(@NotNull EntityFactory passengerResolver, boolean configurePassengers) {
+    if (configurePassengers) {
+      passengerResolver = new RichEntityFactory(passengerResolver, this);
     }
-  }
 
-  private final EntityFactory<Entity> passengerResolver;
-
-  public VanillaEntityExpansion(@NotNull EntityFactory<Entity> passengerResolver) {
     this.passengerResolver = passengerResolver;
   }
-
-  public void
 
   @Override
   public void configure(@NotNull Entity entity, @NotNull NBTCompound entityData) {
@@ -80,77 +63,6 @@ public class VanillaEntityExpansion implements EntityConfigurator<Entity>, Entit
     tagHandler.setTag(Tag.NBT("vanilla-unused"), unusedTags.asCompound());
   }
 
-  @Override
-  public @NotNull NBTCompound serialize(Entity entity) {
-    TagHandler tagHandler = entity.tagHandler();
-
-    EntityMeta entityMeta = entity.getEntityMeta();
-
-    tagHandler.setTag(AIR, (short) entityMeta.getAirTicks());
-    tagHandler.setTag(TICKS_FROZEN, entityMeta.getTickFrozen());
-
-    tagHandler.setTag(ENTITY_ID, entity.getEntityType().namespace().asString());
-    tagHandler.setTag(CUSTOM_NAME, entity.getCustomName());
-    tagHandler.setTag(CUSTOM_NAME_VISIBLE, entity.isCustomNameVisible());
-    tagHandler.setTag(GLOWING, entity.isGlowing());
-    tagHandler.setTag(HAS_VISUAL_FIRE, entity.isOnFire());
-    tagHandler.setTag(SILENT, entity.isSilent());
-    tagHandler.setTag(UUID, entity.getUuid());
-    tagHandler.setTag(NO_GRAVITY, entity.hasNoGravity());
-
-    Pos pos = entity.getPosition();
-    NBTList<NBTDouble> axis = new NBTList<>(NBTType.TAG_Double, Arrays.asList(
-      new NBTDouble(pos.x()), new NBTDouble(pos.y()), new NBTDouble(pos.z())
-    ));
-
-    NBTList<NBTFloat> rotation = new NBTList<>(NBTType.TAG_Float, Arrays.asList(
-      new NBTFloat(pos.yaw()), new NBTFloat(pos.pitch())
-    ));
-
-    tagHandler.setTag(POS, axis);
-    tagHandler.setTag(ROTATION, rotation);
-
-    Vec velocity = entity.getVelocity();
-    NBTList<NBTDouble> motion = new NBTList<>(NBTType.TAG_Double, Arrays.asList(
-      new NBTDouble(velocity.x()), new NBTDouble(velocity.y()), new NBTDouble(velocity.z())
-    ));
-
-    tagHandler.setTag(MOTION, motion);
-
-    List<NBTCompound> passengerList = new ArrayList<>();
-    for (Entity passenger : entity.getPassengers()) {
-      passengerList.add(serialize(passenger));
-    }
-
-    tagHandler.setTag(PASSENGERS, new NBTList<>(NBTType.TAG_Compound, passengerList));
-
-    tagHandler.setTag(FALL_DISTANCE, DEF_FALL_DISTANCE);
-    tagHandler.setTag(ON_GROUND, entity.isOnGround());
-    tagHandler.setTag(PORTAL_COOLDOWN, DEF_PORTAL_COOLDOWN);
-    tagHandler.setTag(TAGS, defTags());
-
-    if (entity instanceof LivingEntity livingEntity) {
-      try {
-        long fireTicks = FIRE_EXTINGUISH_TIME.getLong(livingEntity);
-        long currentTimeMillis = System.currentTimeMillis();
-
-        if (fireTicks <= currentTimeMillis) {
-          fireTicks = 0;
-        } else {
-          fireTicks = fireTicks - currentTimeMillis;
-        }
-
-        tagHandler.setTag(FIRE_TICKS, (short) fireTicks);
-      } catch (IllegalAccessException e) {
-        throw new RuntimeException(e);
-      }
-
-      tagHandler.setTag(INVULNERABLE, livingEntity.isInvulnerable());
-    }
-
-    return tagHandler.asCompound();
-  }
-
   protected void deserializeVelocity(Entity entity, NBTList<NBTDouble> motion) {
     if (motion.isEmpty()) {
       return;
@@ -181,7 +93,7 @@ public class VanillaEntityExpansion implements EntityConfigurator<Entity>, Entit
       );
     }
 
-    entity.refreshPosition(pos); // 🥶
+    entity.teleport(pos); // 🥶
   }
 
   protected void deserializePassengers(Entity entity, NBTList<NBTCompound> passengersData) {
@@ -195,11 +107,11 @@ public class VanillaEntityExpansion implements EntityConfigurator<Entity>, Entit
     }
   }
 
-  public static VanillaEntityExpansion withEntityPassengerResolver() {
-    return new VanillaEntityExpansion((type, entries) -> new Entity(type));
+  public static VanillaEntityConfigurator withEntityPassengerResolver(boolean configurePassengers) {
+    return new VanillaEntityConfigurator((type, entries) -> new Entity(type), configurePassengers);
   }
 
-  public static VanillaEntityExpansion withLivingEntityPassengerResolver() {
-    return new VanillaEntityExpansion((type, entries) -> new LivingEntity(type));
+  public static VanillaEntityConfigurator withLivingEntityPassengerResolver(boolean configurePassengers) {
+    return new VanillaEntityConfigurator((type, entries) -> new LivingEntity(type), configurePassengers);
   }
 }
