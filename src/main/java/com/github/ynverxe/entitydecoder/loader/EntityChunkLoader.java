@@ -9,6 +9,7 @@ import net.minestom.server.instance.AnvilLoader;
 import net.minestom.server.instance.Chunk;
 import net.minestom.server.instance.IChunkLoader;
 import net.minestom.server.instance.Instance;
+import net.minestom.server.timer.TaskSchedule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,13 +34,13 @@ public class EntityChunkLoader implements IChunkLoader {
   @Override
   public @NotNull CompletableFuture<@Nullable Chunk> loadChunk(@NotNull Instance instance, int chunkX, int chunkZ) {
     return delegate.loadChunk(instance, chunkX, chunkZ).thenApply(chunk -> {
-      instance.scheduleNextTick(unused -> {
+      instance.scheduler().buildTask(() -> {
         Chunk loaded = instance.getChunk(chunkX, chunkZ);
 
         if (loaded == null) return; // better safe than sorry
 
         onChunkLoad(loaded);
-      });
+      }).delay(TaskSchedule.tick(3)).schedule();
 
       return chunk;
     });
