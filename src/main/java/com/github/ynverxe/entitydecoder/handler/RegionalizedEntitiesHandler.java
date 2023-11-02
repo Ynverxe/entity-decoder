@@ -38,7 +38,6 @@ import java.util.concurrent.ConcurrentHashMap;
  *}
  * </pre>
  */
-@SuppressWarnings("all")
 public class RegionalizedEntitiesHandler implements ChunkEntitiesHandler {
 
   private final @NotNull Map<IntIntImmutablePair, RegionData> entityDataByRegion = new ConcurrentHashMap<>();
@@ -58,7 +57,7 @@ public class RegionalizedEntitiesHandler implements ChunkEntitiesHandler {
   }
 
   @Override
-  public void loadEntities(@NotNull Chunk chunk) throws IOException {
+  public void loadEntities(@NotNull Chunk chunk) {
     RegionData regionEntities = computeRegionData(chunk);
 
     MutableNBTCompound data = regionEntities.data;
@@ -68,23 +67,18 @@ public class RegionalizedEntitiesHandler implements ChunkEntitiesHandler {
 
     GlobalEventHandler eventHandler = MinecraftServer.getGlobalEventHandler();
 
-    List<Entity> toSpawn = new ArrayList<>();
     Instance instance = chunk.getInstance();
     for (NBTCompound someEntityData : chunkEntities) {
-      Entity entity;
-      try {
-        entity = entityExpansion.guessTypeAndCreate(someEntityData);
+      Entity entity = entityExpansion.guessTypeAndCreate(someEntityData);
 
-        entity.setInstance(instance);
+      if (entity == null) continue;
 
-        entityExpansion.configure(entity, someEntityData);
+      EntityDeserializationEvent entityDeserializationEvent = new EntityDeserializationEvent(entityExpansion, instance, entity);
+      eventHandler.call(entityDeserializationEvent);
+      entity.setInstance(instance);
 
-        eventHandler.call(new EntityConfigurationEvent(entityExpansion.configurator(), entity, someEntityData));
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-
-      eventHandler.call(new EntityDeserializationEvent(entityExpansion.factory(), instance, entity, entity.getPosition()));
+      entityExpansion.configure(entity, someEntityData);
+      eventHandler.call(new EntityConfigurationEvent(entityExpansion, entity, someEntityData));
     }
   }
 
@@ -102,9 +96,11 @@ public class RegionalizedEntitiesHandler implements ChunkEntitiesHandler {
     for (Entity chunkEntity : instance.getChunkEntities(chunk)) {
       NBTCompound serialized = entityExpansion.serialize(chunkEntity);
 
+      if (serialized == null) continue;
+
       toSave.add(serialized);
 
-      EntitySerializationEvent event = new EntitySerializationEvent(entityExpansion.serializer(), chunkEntity, serialized);
+      EntitySerializationEvent event = new EntitySerializationEvent(entityExpansion, chunkEntity, serialized);
       MinecraftServer.getGlobalEventHandler().call(event);
 
       data.put(chunkKey, new NBTList<>(NBTType.TAG_Compound, toSave));

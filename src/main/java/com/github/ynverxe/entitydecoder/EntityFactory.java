@@ -6,6 +6,7 @@ import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.EntityType;
 import net.minestom.server.entity.LivingEntity;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jglrxavpok.hephaistos.nbt.NBTCompound;
 
 public interface EntityFactory {
@@ -13,9 +14,9 @@ public interface EntityFactory {
   EntityFactory ENTITY_FACTORY = (type, entityData) -> new Entity(type);
   EntityFactory LIVING_ENTITY_FACTORY = (type, entityData) -> new LivingEntity(type);
 
-  @NotNull Entity createByType(@NotNull EntityType type, @NotNull NBTCompound entityData) throws Exception;
+  @Nullable Entity createByType(@NotNull EntityType type, @NotNull NBTCompound entityData);
 
-  default Entity guessTypeAndCreate(@NotNull NBTCompound entityData) throws Exception {
+  default @Nullable Entity guessTypeAndCreate(@NotNull NBTCompound entityData) {
     String typeId = entityData.getString("id");
 
     if (typeId == null) {
