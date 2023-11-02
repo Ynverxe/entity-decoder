@@ -4,6 +4,7 @@ import com.github.ynverxe.entitydecoder.EntityExpansion;
 import com.github.ynverxe.entitydecoder.event.EntityConfigurationEvent;
 import com.github.ynverxe.entitydecoder.event.EntityDeserializationEvent;
 import com.github.ynverxe.entitydecoder.event.EntitySerializationEvent;
+import com.github.ynverxe.entitydecoder.util.compress.CompressionIOFactory;
 import com.github.ynverxe.entitydecoder.util.file.EntityRegionFileUtil;
 import it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
 import net.minestom.server.MinecraftServer;
@@ -19,8 +20,6 @@ import org.jglrxavpok.hephaistos.nbt.NBTType;
 import org.jglrxavpok.hephaistos.nbt.mutable.MutableNBTCompound;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,12 +43,18 @@ public class RegionalizedEntitiesHandler implements ChunkEntitiesHandler {
 
   private final @NotNull Map<IntIntImmutablePair, RegionData> entityDataByRegion = new ConcurrentHashMap<>();
 
+  private final @NotNull CompressionIOFactory compressionIOFactory;
   private final @NotNull EntityExpansion entityExpansion;
   private final @NotNull Path entitiesDir;
 
-  public RegionalizedEntitiesHandler(@NotNull EntityExpansion entityExpansion, @NotNull Path entitiesDir) {
+  public RegionalizedEntitiesHandler(@NotNull CompressionIOFactory compressionIOFactory, @NotNull EntityExpansion entityExpansion, @NotNull Path entitiesDir) {
+    this.compressionIOFactory = compressionIOFactory;
     this.entityExpansion = entityExpansion;
     this.entitiesDir = entitiesDir;
+  }
+
+  public RegionalizedEntitiesHandler(@NotNull EntityExpansion entityExpansion, @NotNull Path entitiesDir) {
+    this(CompressionIOFactory.IDENTITY, entityExpansion, entitiesDir);
   }
 
   @Override
@@ -108,7 +113,7 @@ public class RegionalizedEntitiesHandler implements ChunkEntitiesHandler {
     int regionX = chunkToRegion(chunk.getChunkX());
     int regionZ = chunkToRegion(chunk.getChunkZ());
 
-    EntityRegionFileUtil.saveRegionEntities(entitiesDir, regionX, regionZ, this::compress, data.toCompound());
+    EntityRegionFileUtil.saveRegionEntities(entitiesDir, regionX, regionZ, compressionIOFactory::compress, data.toCompound());
   }
 
   @Override
@@ -126,14 +131,6 @@ public class RegionalizedEntitiesHandler implements ChunkEntitiesHandler {
     }
   }
 
-  protected @NotNull InputStream decompress(@NotNull InputStream stream) {
-    return stream;
-  }
-
-  protected @NotNull OutputStream compress(@NotNull OutputStream stream) {
-    return stream;
-  }
-
   protected IntIntImmutablePair regionCoords(@NotNull Chunk chunk) {
     return new IntIntImmutablePair(
       chunkToRegion(chunk.getChunkX()),
@@ -147,7 +144,7 @@ public class RegionalizedEntitiesHandler implements ChunkEntitiesHandler {
         int regionX = chunkToRegion(chunk.getChunkX());
         int regionZ = chunkToRegion(chunk.getChunkZ());
 
-        NBTCompound data = EntityRegionFileUtil.loadRegionEntities(entitiesDir, regionX, regionZ, this::decompress);
+        NBTCompound data = EntityRegionFileUtil.loadRegionEntities(entitiesDir, regionX, regionZ, compressionIOFactory::decompress);
 
         Map<String, NBT> map = new ConcurrentHashMap<>(data.asMapView());
         return new RegionData(new HashSet<>(), new MutableNBTCompound(map));
@@ -176,7 +173,11 @@ public class RegionalizedEntitiesHandler implements ChunkEntitiesHandler {
     }
   }
 
+  public static @NotNull ChunkEntitiesHandler byWorldDir(@NotNull CompressionIOFactory compressionIOFactory, @NotNull EntityExpansion entityExpansion, @NotNull Path worldDir) {
+    return new RegionalizedEntitiesHandler(compressionIOFactory, entityExpansion, worldDir.resolve("entities"));
+  }
+
   public static @NotNull ChunkEntitiesHandler byWorldDir(@NotNull EntityExpansion entityExpansion, @NotNull Path worldDir) {
-    return new RegionalizedEntitiesHandler(entityExpansion, worldDir.resolve("entities"));
+    return byWorldDir(CompressionIOFactory.IDENTITY, entityExpansion, worldDir);
   }
 }

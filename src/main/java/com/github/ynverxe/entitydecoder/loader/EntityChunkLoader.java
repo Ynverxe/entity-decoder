@@ -3,6 +3,7 @@ package com.github.ynverxe.entitydecoder.loader;
 import com.github.ynverxe.entitydecoder.EntityExpansion;
 import com.github.ynverxe.entitydecoder.handler.ChunkEntitiesHandler;
 import com.github.ynverxe.entitydecoder.handler.RegionalizedEntitiesHandler;
+import com.github.ynverxe.entitydecoder.util.compress.CompressionIOFactory;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.instance.AnvilLoader;
 import net.minestom.server.instance.Chunk;
@@ -11,7 +12,6 @@ import net.minestom.server.instance.Instance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 
@@ -93,12 +93,13 @@ public class EntityChunkLoader implements IChunkLoader {
   }
 
   public static @NotNull EntityChunkLoader newRegionalizedLoader(
-    @NotNull EntityExpansion entityExpansion, @NotNull Path worldPath, @NotNull IChunkLoader loader) {
-    return new EntityChunkLoader(RegionalizedEntitiesHandler.byWorldDir(entityExpansion, worldPath), loader);
+    @NotNull CompressionIOFactory compressionIOFactory, @NotNull EntityExpansion entityExpansion,
+    @NotNull Path worldPath, @NotNull IChunkLoader loader) {
+    return new EntityChunkLoader(RegionalizedEntitiesHandler.byWorldDir(compressionIOFactory, entityExpansion, worldPath), loader);
   }
 
   public static @NotNull EntityChunkLoader newRegionalizedAnvilLoader(
-    @NotNull EntityExpansion entityExpansion, @NotNull Path worldPath) {
-    return new EntityChunkLoader(RegionalizedEntitiesHandler.byWorldDir(entityExpansion, worldPath), new AnvilLoader(worldPath));
+    @NotNull CompressionIOFactory compressionIOFactory, @NotNull EntityExpansion entityExpansion, @NotNull Path worldPath) {
+    return new EntityChunkLoader(RegionalizedEntitiesHandler.byWorldDir(compressionIOFactory, entityExpansion, worldPath), new AnvilLoader(worldPath));
   }
 }
