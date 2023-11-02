@@ -2,7 +2,6 @@ package com.github.ynverxe.entitydecoder.vanilla;
 
 import com.github.ynverxe.entitydecoder.EntityConfigurator;
 import com.github.ynverxe.entitydecoder.EntityFactory;
-import com.github.ynverxe.entitydecoder.RichEntityFactory;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.coordinate.Vec;
 import net.minestom.server.entity.Entity;
@@ -18,13 +17,11 @@ import static com.github.ynverxe.entitydecoder.vanilla.EntityVanillaConstants.*;
 public class VanillaEntityConfigurator implements EntityConfigurator {
 
   private final EntityFactory passengerResolver;
+  private final boolean configurePassengers;
 
   public VanillaEntityConfigurator(@NotNull EntityFactory passengerResolver, boolean configurePassengers) {
-    if (configurePassengers) {
-      passengerResolver = new RichEntityFactory(passengerResolver, this);
-    }
-
     this.passengerResolver = passengerResolver;
+    this.configurePassengers = configurePassengers;
   }
 
   @Override
@@ -93,13 +90,18 @@ public class VanillaEntityConfigurator implements EntityConfigurator {
       );
     }
 
-    entity.teleport(pos); // 🥶
+    entity.teleport(pos);
   }
 
   protected void deserializePassengers(Entity entity, NBTList<NBTCompound> passengersData) {
     for (NBTCompound entry : passengersData) {
       try {
         Entity passenger = passengerResolver.guessTypeAndCreate(entry);
+
+        if (configurePassengers) {
+          configure(passenger, entry);
+        }
+
         entity.addPassenger(passenger);
       } catch (Exception e) {
         throw new RuntimeException("Unable to decode passenger", e);
