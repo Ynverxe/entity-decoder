@@ -3,11 +3,21 @@ package com.github.ynverxe.entitydecoder;
 import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.EntityType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jglrxavpok.hephaistos.nbt.NBTCompound;
 
-public record DelegatedEntityExpansion(@NotNull EntityConfigurator configurator,
-                                       @NotNull EntityFactory factory,
-                                       @NotNull EntitySerializer serializer) implements EntityExpansion {
+public class DelegatedEntityExpansion implements EntityExpansion {
+
+  private final @NotNull EntityConfigurator configurator;
+  private final @NotNull EntityFactory factory;
+  private final @NotNull EntitySerializer serializer;
+
+  public DelegatedEntityExpansion(
+    @NotNull EntityConfigurator configurator, @NotNull EntityFactory factory, @NotNull EntitySerializer serializer) {
+    this.configurator = configurator;
+    this.factory = factory;
+    this.serializer = serializer;
+  }
 
   @Override
   public void configure(@NotNull Entity entity, @NotNull NBTCompound entityData) {
@@ -15,12 +25,12 @@ public record DelegatedEntityExpansion(@NotNull EntityConfigurator configurator,
   }
 
   @Override
-  public @NotNull Entity createByType(@NotNull EntityType type, @NotNull NBTCompound entityData) throws Exception {
+  public @Nullable Entity createByType(@NotNull EntityType type, @NotNull NBTCompound entityData) {
     return factory.createByType(type, entityData);
   }
 
   @Override
-  public Entity guessTypeAndCreate(@NotNull NBTCompound entityData) throws Exception {
+  public @Nullable Entity guessTypeAndCreate(@NotNull NBTCompound entityData) {
     return factory.guessTypeAndCreate(entityData);
   }
 
@@ -29,17 +39,14 @@ public record DelegatedEntityExpansion(@NotNull EntityConfigurator configurator,
     return serializer.serialize(entity);
   }
 
-  @Override
   public EntityConfigurator configurator() {
     return configurator;
   }
 
-  @Override
   public EntityFactory factory() {
     return factory;
   }
 
-  @Override
   public EntitySerializer serializer() {
     return serializer;
   }
