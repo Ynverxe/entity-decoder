@@ -11,5 +11,5 @@ repositories {
 }
 
 dependencies {
-    api("com.github.Minestom.Minestom:Minestom:c496ee357")
+    compileOnly("com.github.Minestom.Minestom:Minestom:c496ee357")
 }
