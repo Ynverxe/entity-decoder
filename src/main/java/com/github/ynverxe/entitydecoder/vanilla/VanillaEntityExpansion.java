@@ -23,4 +23,12 @@ public final class VanillaEntityExpansion {
   public static @NotNull DelegatedEntityExpansion make(@NotNull EntityFactory entityFactory, boolean configurePassengers) {
     return make(entityFactory, null, configurePassengers);
   }
+
+  public static @NotNull DelegatedEntityExpansion withEntityFactory() {
+    return make(EntityFactory.ENTITY_FACTORY, true);
+  }
+
+  public static @NotNull DelegatedEntityExpansion withLivingEntityFactory() {
+    return make(EntityFactory.LIVING_ENTITY_FACTORY, true);
+  }
 }
