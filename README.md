@@ -1,6 +1,22 @@
 # entity-decoder
 Entity Decoder allows to you to add support for Entity (de)serialization and basic Vanilla de(serialization) for Entities and Living Entities for [Minestom](https://github.com/Minestom/Minestom).
 
+## Import into your project
+### Gradle
+
+**gradle.build.kts:**
+```kotlin
+repositories {
+    maven("https://jitpack.io")
+}
+```
+
+```kotlin
+dependencies {
+    implementation("com.github.ynverxe:entity-decoder:VERSION")
+}
+```
+
 ## How implement it? 
 It's very simple. For this example we will use the Vanilla Entity Expansion included in the project.
 
