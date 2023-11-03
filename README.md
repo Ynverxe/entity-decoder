@@ -51,7 +51,7 @@ TAG_Compound {
 With this in mind, we can load and save basic entity properties [(Entity & LivingEntity)](https://minecraft.fandom.com/wiki/Entity_format#Entity_Format) for a world that uses the Anvil format with the following code:
 
 ```java
-public static void main(String[] args) {
+  public static void main(String[] args) {
     // some stuff...
 
     InstanceContainer container = MinecraftServer.getInstanceManager()
