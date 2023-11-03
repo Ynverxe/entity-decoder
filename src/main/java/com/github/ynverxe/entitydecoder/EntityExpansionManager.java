@@ -22,6 +22,12 @@ public class EntityExpansionManager implements EntityExpansion {
     expansions.put(type, expansion);
   }
 
+  public void removeSupportForEntityTypes(@NotNull EntityType... entityTypes) {
+    for (EntityType entityType : entityTypes) {
+      registerExpansion(entityType, EMPTY);
+    }
+  }
+
   public @NotNull Map<EntityType, EntityExpansion> expansions() {
     return expansions;
   }
