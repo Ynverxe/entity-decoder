@@ -9,11 +9,11 @@ version = "0.0.1-beta"
 repositories {
     gradlePluginPortal()
     mavenCentral()
-    maven("https://jitpack.io")
 }
 
 dependencies {
-    compileOnly("com.github.Minestom.Minestom:Minestom:c496ee357")
+    implementation("org.jetbrains:annotations:24.0.0")
+    implementation("dev.hollowcube:minestom-ce:5bcc72b911")
 }
 
 publishing {
