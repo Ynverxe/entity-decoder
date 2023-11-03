@@ -9,6 +9,7 @@ version = "0.0.1-beta"
 repositories {
     gradlePluginPortal()
     mavenCentral()
+    maven("https://jitpack.io")
 }
 
 dependencies {
